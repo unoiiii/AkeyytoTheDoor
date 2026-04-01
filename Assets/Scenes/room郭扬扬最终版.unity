@@ -4953,7 +4953,6 @@ GameObject:
   m_Component:
   - component: {fileID: 573837499}
   - component: {fileID: 573837498}
-  - component: {fileID: 573837497}
   - component: {fileID: 573837496}
   - component: {fileID: 573837495}
   - component: {fileID: 573837494}
@@ -5275,14 +5274,6 @@ MonoBehaviour:
   shaderFXAAPreset3: {fileID: 4800000, guid: c182fa94a5a0a4c02870641efcd38cd5, type: 3}
   shaderFXAAII: {fileID: 4800000, guid: cd5b323dcc592457790ff18b528f5e67, type: 3}
   shaderFXAAIII: {fileID: 4800000, guid: c547503fff0e8482ea5793727057041c, type: 3}
---- !u!81 &573837497
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573837491}
-  m_Enabled: 1
 --- !u!20 &573837498
 Camera:
   m_ObjectHideFlags: 0
@@ -8194,7 +8185,6 @@ GameObject:
   m_Component:
   - component: {fileID: 877043976}
   - component: {fileID: 877043975}
-  - component: {fileID: 877043974}
   - component: {fileID: 877043973}
   m_Layer: 0
   m_Name: "\u6700\u540E\u5BA2\u5385\u524D\u7684\u89C6\u89D2"
@@ -8247,14 +8237,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!81 &877043974
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 877043972}
-  m_Enabled: 1
 --- !u!20 &877043975
 Camera:
   m_ObjectHideFlags: 0
@@ -8870,7 +8852,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1004647251}
   - component: {fileID: 1004647250}
-  - component: {fileID: 1004647249}
   - component: {fileID: 1004647248}
   m_Layer: 0
   m_Name: "\u6C99\u53D1\u89C6\u89D2"
@@ -8923,14 +8904,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!81 &1004647249
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1004647247}
-  m_Enabled: 1
 --- !u!20 &1004647250
 Camera:
   m_ObjectHideFlags: 0
@@ -10142,7 +10115,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1203265205}
   - component: {fileID: 1203265204}
-  - component: {fileID: 1203265203}
   - component: {fileID: 1203265202}
   - component: {fileID: 1203265201}
   - component: {fileID: 1203265200}
@@ -10464,14 +10436,6 @@ MonoBehaviour:
   shaderFXAAPreset3: {fileID: 4800000, guid: c182fa94a5a0a4c02870641efcd38cd5, type: 3}
   shaderFXAAII: {fileID: 4800000, guid: cd5b323dcc592457790ff18b528f5e67, type: 3}
   shaderFXAAIII: {fileID: 4800000, guid: c547503fff0e8482ea5793727057041c, type: 3}
---- !u!81 &1203265203
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1203265197}
-  m_Enabled: 1
 --- !u!20 &1203265204
 Camera:
   m_ObjectHideFlags: 0
@@ -11119,8 +11083,9 @@ GameObject:
   - component: {fileID: 1289059961}
   - component: {fileID: 1289059960}
   - component: {fileID: 1289059959}
+  - component: {fileID: 1289059963}
   m_Layer: 0
-  m_Name: "\u96F6\u98DF\u67DC\u5B50\u89C6\u89D2"
+  m_Name: "\u96F6\u98DF\u67DC\u5B50\u89C6\u89D2\uFF08\u4E3B\u76F8\u673A\uFF09"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11244,6 +11209,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -169.188, z: 0}
+--- !u!114 &1289059963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1289059958}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88b7607b148f50a488bdaf5b6b92f136, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDuration: 1.5
+  moveEase: 7
+  dialogue1CorrectPosition: {fileID: 1289059962}
+  dialogue2CorrectPosition: {fileID: 1004647251}
 --- !u!1 &1295456988
 GameObject:
   m_ObjectHideFlags: 0
@@ -11665,10 +11646,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1451898839}
   - component: {fileID: 1451898838}
-  - component: {fileID: 1451898837}
   - component: {fileID: 1451898836}
   m_Layer: 0
-  m_Name: "\u8FDB\u5165\u95E8\u7684\u89C6\u89D2"
+  m_Name: "\u8FDB\u5165\u95E8\u7684\u89C6\u89D2\uFF08\u4E3B\u76F8\u673A\uFF09"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11718,14 +11698,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!81 &1451898837
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1451898834}
-  m_Enabled: 1
 --- !u!20 &1451898838
 Camera:
   m_ObjectHideFlags: 0
