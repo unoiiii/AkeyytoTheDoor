@@ -11081,11 +11081,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1289059962}
   - component: {fileID: 1289059961}
-  - component: {fileID: 1289059960}
   - component: {fileID: 1289059959}
-  - component: {fileID: 1289059963}
   m_Layer: 0
-  m_Name: "\u96F6\u98DF\u67DC\u5B50\u89C6\u89D2\uFF08\u4E3B\u76F8\u673A\uFF09"
+  m_Name: "\u96F6\u98DF\u67DC\u5B50\u89C6\u89D2"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11135,14 +11133,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!81 &1289059960
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289059958}
-  m_Enabled: 1
 --- !u!20 &1289059961
 Camera:
   m_ObjectHideFlags: 0
@@ -11209,22 +11199,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -169.188, z: 0}
---- !u!114 &1289059963
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1289059958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 88b7607b148f50a488bdaf5b6b92f136, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveDuration: 1.5
-  moveEase: 7
-  dialogue1CorrectPosition: {fileID: 1289059962}
-  dialogue2CorrectPosition: {fileID: 1004647251}
 --- !u!1 &1295456988
 GameObject:
   m_ObjectHideFlags: 0
@@ -11647,6 +11621,8 @@ GameObject:
   - component: {fileID: 1451898839}
   - component: {fileID: 1451898838}
   - component: {fileID: 1451898836}
+  - component: {fileID: 1451898841}
+  - component: {fileID: 1451898840}
   m_Layer: 0
   m_Name: "\u8FDB\u5165\u95E8\u7684\u89C6\u89D2\uFF08\u4E3B\u76F8\u673A\uFF09"
   m_TagString: Untagged
@@ -11764,6 +11740,30 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 4.773, y: -207.158, z: -0.17}
+--- !u!81 &1451898840
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451898834}
+  m_Enabled: 1
+--- !u!114 &1451898841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451898834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88b7607b148f50a488bdaf5b6b92f136, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDuration: 1.5
+  moveEase: 7
+  dialogue1CorrectPosition: {fileID: 1289059962}
+  dialogue2CorrectPosition: {fileID: 1004647251}
 --- !u!1001 &1468421047
 PrefabInstance:
   m_ObjectHideFlags: 0
