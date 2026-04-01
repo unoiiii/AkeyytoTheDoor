@@ -25,17 +25,20 @@ public class UIManager : MonoBehaviour
     [Tooltip("UI消失的缓动效果")]
     public Ease hideEase = Ease.InBack;
 
-    [Header("UI Images / 对话面板")]
+    [Header("UI Images / 对话面板 (点击不发广播)")]
     public GameObject dialogue1;
     public GameObject dialogue2;
 
-    [Header("对话1 选项 (普通 Image)")]
-    public Image dialogue1CorrectOption;
-    public Image dialogue1IncorrectOption;
+    [Header("对话1 选项 (点击发送广播)")]
+    public GameObject dialogue1OptionCorrect;
+    public GameObject dialogue1OptionIncorrect;
 
-    [Header("对话2 选项 (如果有的话)")]
-    public Image dialogue2CorrectOption;
-    public Image dialogue2IncorrectOption;
+    [Header("对话2 选项 (点击发送广播)")]
+    public GameObject dialogue2OptionCorrect;
+    public GameObject dialogue2OptionIncorrect;
+
+    [Header("Game Over UI / 游戏结束界面")]
+    public GameObject gameOverUI;
 
     // 广播事件：参数1为对话编号（如 1 代表对话1），参数2为是否正确（true为正确，false为错误）
     public event Action<int, bool> OnDialogueOptionClicked;
@@ -55,11 +58,11 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         // 为普通 Image 添加点击事件监听
-        AddClickListenerToImage(dialogue1CorrectOption, 1, true);
-        AddClickListenerToImage(dialogue1IncorrectOption, 1, false);
+        AddClickListenerToGameObject(dialogue1OptionCorrect, 1, true);
+        AddClickListenerToGameObject(dialogue1OptionIncorrect, 1, false);
         
-        AddClickListenerToImage(dialogue2CorrectOption, 2, true);
-        AddClickListenerToImage(dialogue2IncorrectOption, 2, false);
+        AddClickListenerToGameObject(dialogue2OptionCorrect, 2, true);
+        AddClickListenerToGameObject(dialogue2OptionIncorrect, 2, false);
 
         // 初始化UI状态
         InitializeUI();
@@ -72,14 +75,17 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void InitializeUI()
     {
+        // 隐藏游戏结束界面
+        HideUI(gameOverUI, true);
+
         // 隐藏所有对话2相关的UI (瞬间隐藏，不要动画，作为初始状态)
         HideUI(dialogue2, true);
-        SetImageActive(dialogue2CorrectOption, false, true);
-        SetImageActive(dialogue2IncorrectOption, false, true);
+        SetGameObjectActive(dialogue2OptionCorrect, false, true);
+        SetGameObjectActive(dialogue2OptionIncorrect, false, true);
 
         // 隐藏对话1的选项 (瞬间隐藏，不要动画，作为初始状态)
-        SetImageActive(dialogue1CorrectOption, false, true);
-        SetImageActive(dialogue1IncorrectOption, false, true);
+        SetGameObjectActive(dialogue1OptionCorrect, false, true);
+        SetGameObjectActive(dialogue1OptionIncorrect, false, true);
 
         // 为了让对话1在开始时也播放出现动画，先瞬间隐藏它，再调用普通的 ShowUI
         HideUI(dialogue1, true);
@@ -102,49 +108,60 @@ public class UIManager : MonoBehaviour
 
         if (dialogueIndex == 1)
         {
-            SetImageActive(dialogue1CorrectOption, true);
-            SetImageActive(dialogue1IncorrectOption, true);
+            // 只有当对话框仍然激活时，才显示选项，防止在快速点击或重复调用时选项错误出现
+            if (dialogue1 != null && dialogue1.activeSelf)
+            {
+                SetGameObjectActive(dialogue1OptionCorrect, true);
+                SetGameObjectActive(dialogue1OptionIncorrect, true);
+            }
         }
         else if (dialogueIndex == 2)
         {
-            SetImageActive(dialogue2CorrectOption, true);
-            SetImageActive(dialogue2IncorrectOption, true);
+            if (dialogue2 != null && dialogue2.activeSelf)
+            {
+                SetGameObjectActive(dialogue2OptionCorrect, true);
+                SetGameObjectActive(dialogue2OptionIncorrect, true);
+            }
         }
     }
 
     /// <summary>
-    /// 辅助方法：安全地设置Image的激活状态
+    /// 辅助方法：安全地设置GameObject的激活状态
     /// </summary>
-    private void SetImageActive(Image img, bool isActive, bool instant = false)
+    private void SetGameObjectActive(GameObject obj, bool isActive, bool instant = false)
     {
-        if (img != null && img.gameObject != null)
+        if (obj != null)
         {
             if (isActive)
             {
-                ShowUI(img.gameObject, instant);
+                ShowUI(obj, instant);
             }
             else
             {
-                HideUI(img.gameObject, instant);
+                HideUI(obj, instant);
             }
         }
     }
 
     /// <summary>
-    /// 为指定的 Image 添加 EventTrigger 以实现点击监听
+    /// 为指定的 GameObject 添加 EventTrigger 以实现点击监听
     /// </summary>
-    private void AddClickListenerToImage(Image img, int dialogueIndex, bool isCorrect)
+    private void AddClickListenerToGameObject(GameObject obj, int dialogueIndex, bool isCorrect)
     {
-        if (img == null) return;
+        if (obj == null) return;
 
-        // 确保 Image 可以接收射线检测
-        img.raycastTarget = true;
+        // 尝试获取 Image 组件以确保它可以接收射线检测
+        Image img = obj.GetComponent<Image>();
+        if (img != null)
+        {
+            img.raycastTarget = true;
+        }
 
         // 获取或添加 EventTrigger 组件
-        EventTrigger trigger = img.gameObject.GetComponent<EventTrigger>();
+        EventTrigger trigger = obj.GetComponent<EventTrigger>();
         if (trigger == null)
         {
-            trigger = img.gameObject.AddComponent<EventTrigger>();
+            trigger = obj.AddComponent<EventTrigger>();
         }
 
         // 创建 PointerClick 事件
@@ -160,28 +177,46 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void HandleOptionClick(int dialogueIndex, bool isCorrect)
     {
-        // 1. 广播玩家点击了哪个对话的正确/错误选项
-        OnDialogueOptionClicked?.Invoke(dialogueIndex, isCorrect);
-
-        // 2. 隐藏当前对话框及其选项
+        // 1. 隐藏当前对话框及其选项
         HideDialogue(dialogueIndex);
         if (dialogueIndex == 1)
         {
-            SetImageActive(dialogue1CorrectOption, false);
-            SetImageActive(dialogue1IncorrectOption, false);
-            
-            // 3. 规则：如果点击了对话1的【正确】选项，则显示对话2
-            if (isCorrect)
-            {
-                // 延迟等待隐藏动画播完再显示下一个，或者直接显示
-                float delay = animationType == UIAnimationType.None ? 0f : animationDuration;
-                StartCoroutine(ShowNextDialogueDelayed(2, delay));
-            }
+            SetGameObjectActive(dialogue1OptionCorrect, false);
+            SetGameObjectActive(dialogue1OptionIncorrect, false);
         }
         else if (dialogueIndex == 2)
         {
-            SetImageActive(dialogue2CorrectOption, false);
-            SetImageActive(dialogue2IncorrectOption, false);
+            SetGameObjectActive(dialogue2OptionCorrect, false);
+            SetGameObjectActive(dialogue2OptionIncorrect, false);
+        }
+
+        // 2. 广播玩家点击了哪个对话的正确/错误选项
+        // 将广播放到 UI 更新之后，防止外部脚本报错中断 UI 逻辑
+        try
+        {
+            OnDialogueOptionClicked?.Invoke(dialogueIndex, isCorrect);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Broadcast OnDialogueOptionClicked failed: {e.Message}\n{e.StackTrace}");
+        }
+
+        // 3. 结果处理：正确则推进流程，错误则显示Game Over
+        float delay = animationType == UIAnimationType.None ? 0f : animationDuration;
+        
+        if (isCorrect)
+        {
+            // 规则：如果点击了对话1的【正确】选项，则显示对话2
+            if (dialogueIndex == 1)
+            {
+                // 延迟等待隐藏动画播完再显示下一个，或者直接显示
+                StartCoroutine(ShowNextDialogueDelayed(2, delay));
+            }
+        }
+        else
+        {
+            // 如果选择错误，显示游戏结束界面
+            StartCoroutine(ShowGameOverDelayed(delay));
         }
     }
 
@@ -191,6 +226,21 @@ public class UIManager : MonoBehaviour
             yield return new WaitForSeconds(delay);
             
         ShowDialogue(dialogueIndex);
+    }
+
+    private IEnumerator ShowGameOverDelayed(float delay)
+    {
+        if (delay > 0)
+            yield return new WaitForSeconds(delay);
+            
+        if (gameOverUI != null)
+        {
+            ShowUI(gameOverUI);
+        }
+        else
+        {
+            Debug.LogWarning("UIManager: 未分配 Game Over UI！");
+        }
     }
 
     /// <summary>
@@ -204,16 +254,16 @@ public class UIManager : MonoBehaviour
         {
             ShowUI(dialogue1);
             // 每次重新显示对话1时，选项先瞬间隐藏，再走延迟动画逻辑
-            SetImageActive(dialogue1CorrectOption, false, true);
-            SetImageActive(dialogue1IncorrectOption, false, true);
+            SetGameObjectActive(dialogue1OptionCorrect, false, true);
+            SetGameObjectActive(dialogue1OptionIncorrect, false, true);
             StartCoroutine(ShowOptionsDelayed(1, optionDelay));
         }
         else if (dialogueIndex == 2 && dialogue2 != null)
         {
             ShowUI(dialogue2);
             // 显示对话2时，选项先瞬间隐藏，再延迟出现
-            SetImageActive(dialogue2CorrectOption, false, true);
-            SetImageActive(dialogue2IncorrectOption, false, true);
+            SetGameObjectActive(dialogue2OptionCorrect, false, true);
+            SetGameObjectActive(dialogue2OptionIncorrect, false, true);
             StartCoroutine(ShowOptionsDelayed(2, optionDelay));
         }
     }
@@ -240,10 +290,11 @@ public class UIManager : MonoBehaviour
     {
         HideUI(dialogue1);
         HideUI(dialogue2);
-        SetImageActive(dialogue1CorrectOption, false);
-        SetImageActive(dialogue1IncorrectOption, false);
-        SetImageActive(dialogue2CorrectOption, false);
-        SetImageActive(dialogue2IncorrectOption, false);
+        SetGameObjectActive(dialogue1OptionCorrect, false);
+        SetGameObjectActive(dialogue1OptionIncorrect, false);
+        SetGameObjectActive(dialogue2OptionCorrect, false);
+        SetGameObjectActive(dialogue2OptionIncorrect, false);
+        HideUI(gameOverUI);
     }
 
     #region DOTween Animation Helpers
@@ -259,6 +310,13 @@ public class UIManager : MonoBehaviour
 
         uiObject.SetActive(true);
 
+        // 确保显示时能够交互
+        if (cg != null)
+        {
+            cg.blocksRaycasts = true;
+            cg.interactable = true;
+        }
+
         if (instant || animationType == UIAnimationType.None)
         {
             if (cg != null) cg.alpha = 1f;
@@ -270,6 +328,8 @@ public class UIManager : MonoBehaviour
         {
             case UIAnimationType.Fade:
                 if (cg == null) cg = uiObject.AddComponent<CanvasGroup>();
+                cg.blocksRaycasts = true;
+                cg.interactable = true;
                 cg.alpha = 0f;
                 cg.DOFade(1f, animationDuration).SetEase(showEase);
                 break;
@@ -289,6 +349,13 @@ public class UIManager : MonoBehaviour
         CanvasGroup cg = uiObject.GetComponent<CanvasGroup>();
         if (cg != null) cg.DOKill();
 
+        // 隐藏时立即禁用交互
+        if (cg != null)
+        {
+            cg.blocksRaycasts = false;
+            cg.interactable = false;
+        }
+
         if (instant || animationType == UIAnimationType.None)
         {
             uiObject.SetActive(false);
@@ -299,6 +366,8 @@ public class UIManager : MonoBehaviour
         {
             case UIAnimationType.Fade:
                 if (cg == null) cg = uiObject.AddComponent<CanvasGroup>();
+                cg.blocksRaycasts = false;
+                cg.interactable = false;
                 cg.DOFade(0f, animationDuration).SetEase(hideEase).OnComplete(() => uiObject.SetActive(false));
                 break;
             case UIAnimationType.Scale:

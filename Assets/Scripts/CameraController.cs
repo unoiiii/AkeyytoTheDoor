@@ -1,13 +1,14 @@
 using UnityEngine;
 using System;
+using DG.Tweening;
 
 public class CameraController : MonoBehaviour
 {
     [Header("摄像机移动设置")]
-    [Tooltip("摄像机的移动速度")]
-    public float moveSpeed = 5f;
-    [Tooltip("摄像机的旋转速度")]
-    public float rotationSpeed = 5f;
+    [Tooltip("摄像机的移动时间")]
+    public float moveDuration = 1.5f;
+    [Tooltip("移动的缓动效果")]
+    public Ease moveEase = Ease.InOutQuad;
 
     [Header("目标位置 (对应正确选项)")]
     [Tooltip("玩家点击对话1正确选项时，摄像机移动到的位置")]
@@ -15,9 +16,6 @@ public class CameraController : MonoBehaviour
     
     [Tooltip("玩家点击对话2正确选项时，摄像机移动到的位置")]
     public Transform dialogue2CorrectPosition;
-
-    // 当前摄像机需要移动到的目标位置
-    private Transform targetTransform;
 
     private void Start()
     {
@@ -52,6 +50,7 @@ public class CameraController : MonoBehaviour
         // 如果玩家点击了正确的选项，根据对话编号设置对应的目标位置
         if (isCorrect)
         {
+            Transform targetTransform = null;
             switch (dialogueIndex)
             {
                 case 1:
@@ -70,6 +69,15 @@ public class CameraController : MonoBehaviour
                     Debug.LogWarning($"CameraController: 未配置对话 {dialogueIndex} 的目标位置。");
                     break;
             }
+
+            if (targetTransform != null)
+            {
+                // 停止之前的动画，防止冲突
+                transform.DOKill();
+                // 使用 DOTween 移动摄像机
+                transform.DOMove(targetTransform.position, moveDuration).SetEase(moveEase);
+                transform.DORotateQuaternion(targetTransform.rotation, moveDuration).SetEase(moveEase);
+            }
         }
     }
 
@@ -80,31 +88,14 @@ public class CameraController : MonoBehaviour
         {
             if (dialogue1CorrectPosition != null)
             {
-                targetTransform = dialogue1CorrectPosition;
+                transform.DOKill();
+                transform.DOMove(dialogue1CorrectPosition.position, moveDuration).SetEase(moveEase);
+                transform.DORotateQuaternion(dialogue1CorrectPosition.rotation, moveDuration).SetEase(moveEase);
                 Debug.Log("CameraController: 测试功能触发 -> 准备移动到对话1正确位置");
             }
             else
             {
                 Debug.LogWarning("CameraController: 测试功能触发失败，未在Inspector中分配 dialogue1CorrectPosition！");
-            }
-        }
-
-        // 如果有目标位置，则平滑移动和旋转摄像机
-        if (targetTransform != null)
-        {
-            // 使用 Vector3.Lerp 实现平滑的位置移动
-            transform.position = Vector3.Lerp(transform.position, targetTransform.position, moveSpeed * Time.deltaTime);
-            
-            // 使用 Quaternion.Lerp 实现平滑的旋转过渡
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetTransform.rotation, rotationSpeed * Time.deltaTime);
-
-            // 可选优化：如果摄像机已经非常接近目标位置和角度，则直接贴合目标并停止插值，节省性能
-            if (Vector3.Distance(transform.position, targetTransform.position) < 0.001f &&
-                Quaternion.Angle(transform.rotation, targetTransform.rotation) < 0.01f)
-            {
-                transform.position = targetTransform.position;
-                transform.rotation = targetTransform.rotation;
-                targetTransform = null; // 到达目标，清空目标变量
             }
         }
     }
