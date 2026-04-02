@@ -19,24 +19,24 @@ public class CameraController : MonoBehaviour
 
     private void Start()
     {
-        // 监听 UIManager2 的广播事件
-        // 确保 UIManager2.Instance 存在后再进行监听，避免空引用异常
-        if (UIManager2.Instance != null)
+        // 监听 UIManager 的广播事件
+        // 确保 UIManager.Instance 存在后再进行监听，避免空引用异常
+        if (UIManager.Instance != null)
         {
-            UIManager2.Instance.OnDialogueOptionClicked += HandleDialogueOptionClicked;
+            UIManager.Instance.OnDialogueOptionClicked += HandleDialogueOptionClicked;
         }
         else
         {
-            Debug.LogWarning("CameraController: 找不到 UIManager2.Instance，监听事件失败！");
+            Debug.LogWarning("CameraController: 找不到 UIManager.Instance，监听事件失败！");
         }
     }
 
     private void OnDestroy()
     {
         // 移除监听，防止内存泄漏或空引用异常
-        if (UIManager2.Instance != null)
+        if (UIManager.Instance != null)
         {
-            UIManager2.Instance.OnDialogueOptionClicked -= HandleDialogueOptionClicked;
+            UIManager.Instance.OnDialogueOptionClicked -= HandleDialogueOptionClicked;
         }
     }
 
