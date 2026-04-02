@@ -61,6 +61,9 @@ public class UIManager : MonoBehaviour
     [Header("UI Images / 对话9")]
     public GameObject dialogue9;
 
+    [Header("UI Images / 对话10")]
+    public GameObject dialogue10;
+
     [Header("Raw Image (对话3出现时打开)")]
     public RawImage dialogue3RawImage;
 
@@ -70,6 +73,10 @@ public class UIManager : MonoBehaviour
     [Header("Game Over UI / 游戏结束界面")]
     public GameObject gameOverUI;
 
+    [Header("Audio Settings / 音频设置")]
+    [Tooltip("挂载一个包含AudioSource组件的游戏物体，用于播放背景音效")]
+    public AudioSource backgroundAudio;
+
     // 广播事件：参数1为对话编号（如 1 代表对话1），参数2为是否正确（true为正确，false为错误）
     public event Action<int, bool> OnDialogueOptionClicked;
     
@@ -78,6 +85,8 @@ public class UIManager : MonoBehaviour
 
     // 广播事件：参数为对话编号（用于单纯点击对话面板，不区分正误）
     public event Action<int> OnDialogueClicked;
+
+    private bool isDialogue8Clicked = false;
 
     private void Awake()
     {
@@ -124,18 +133,10 @@ public class UIManager : MonoBehaviour
         // 为对话8本身添加点击事件
         AddDialogueClickListener(dialogue8, () => 
         {
-            if (dialogue8 != null && dialogue8.activeSelf)
+            if (dialogue8 != null && dialogue8.activeSelf && !isDialogue8Clicked)
             {
-                HideDialogue(8); // 隐藏对话8本身
-                // 广播对话被点击事件，让摄像机移动
-                try
-                {
-                    OnDialogueClicked?.Invoke(8);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Broadcast OnDialogueClicked failed: {e.Message}\n{e.StackTrace}");
-                }
+                isDialogue8Clicked = true;
+                StartCoroutine(HandleDialogue8ClickDelayed());
             }
         });
 
@@ -148,8 +149,37 @@ public class UIManager : MonoBehaviour
             }
         });
 
+        // 为对话10本身添加点击事件
+        AddDialogueClickListener(dialogue10, () => 
+        {
+            if (dialogue10 != null && dialogue10.activeSelf)
+            {
+                HideDialogue(10);
+            }
+        });
+
         // 初始化UI状态
         InitializeUI();
+    }
+
+    private IEnumerator HandleDialogue8ClickDelayed()
+    {
+        yield return new WaitForSeconds(2f);
+
+        if (dialogue8 != null && dialogue8.activeSelf)
+        {
+            HideDialogue(8); // 隐藏对话8本身
+            // 广播对话被点击事件，让摄像机移动
+            try
+            {
+                OnDialogueClicked?.Invoke(8);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Broadcast OnDialogueClicked failed: {e.Message}\n{e.StackTrace}");
+            }
+        }
+        isDialogue8Clicked = false;
     }
 
     /// <summary>
@@ -223,6 +253,9 @@ public class UIManager : MonoBehaviour
         // 隐藏所有对话9相关的UI (瞬间隐藏，不要动画，作为初始状态)
         HideUI(dialogue9, true);
 
+        // 隐藏所有对话10相关的UI (瞬间隐藏，不要动画，作为初始状态)
+        HideUI(dialogue10, true);
+
         // 显示视频 (始终打开)
         if (video1 != null) video1.gameObject.SetActive(true);
 
@@ -238,6 +271,13 @@ public class UIManager : MonoBehaviour
         
         // 播放对话1出现的动画
         ShowUI(dialogue1, false);
+
+        // 播放背景音频并设置循环
+        if (backgroundAudio != null && !backgroundAudio.isPlaying)
+        {
+            backgroundAudio.loop = true;
+            backgroundAudio.Play();
+        }
 
         // 延迟显示对话1的选项
         // 根据是否有主对话框的动画，适当增加延迟时间
@@ -476,6 +516,15 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private IEnumerator StopAudioDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (backgroundAudio != null && backgroundAudio.isPlaying)
+        {
+            backgroundAudio.Stop();
+        }
+    }
+
     /// <summary>
     /// 在正确的时间调用此方法显示对应的UI对话
     /// </summary>
@@ -489,6 +538,14 @@ public class UIManager : MonoBehaviour
             // 每次重新显示对话1时，选项先瞬间隐藏，再走延迟动画逻辑
             SetGameObjectActive(dialogue1OptionCorrect, false, true);
             SetGameObjectActive(dialogue1OptionIncorrect, false, true);
+            
+            // 对话1出现时，播放背景音频并设置循环
+            if (backgroundAudio != null && !backgroundAudio.isPlaying)
+            {
+                backgroundAudio.loop = true;
+                backgroundAudio.Play();
+            }
+
             StartCoroutine(ShowOptionsDelayed(1, optionDelay));
         }
         else if (dialogueIndex == 2 && dialogue2 != null)
@@ -538,11 +595,21 @@ public class UIManager : MonoBehaviour
         }
         else if (dialogueIndex == 8 && dialogue8 != null)
         {
+            isDialogue8Clicked = false;
             ShowUI(dialogue8);
         }
         else if (dialogueIndex == 9 && dialogue9 != null)
         {
             ShowUI(dialogue9);
+            // 对话9出现后，延迟2秒自动显示对话10
+            StartCoroutine(ShowNextDialogueDelayed(10, 2f));
+        }
+        else if (dialogueIndex == 10 && dialogue10 != null)
+        {
+            ShowUI(dialogue10);
+            
+            // 对话10出现后，延迟8秒停止音频
+            StartCoroutine(StopAudioDelayed(8f));
         }
 
         // 触发对话显示的事件
@@ -598,6 +665,10 @@ public class UIManager : MonoBehaviour
         {
             HideUI(dialogue9);
         }
+        else if (dialogueIndex == 10 && dialogue10 != null)
+        {
+            HideUI(dialogue10);
+        }
     }
 
     /// <summary>
@@ -614,6 +685,7 @@ public class UIManager : MonoBehaviour
         HideUI(dialogue7);
         HideUI(dialogue8);
         HideUI(dialogue9);
+        HideUI(dialogue10);
         SetGameObjectActive(dialogue1OptionCorrect, false);
         SetGameObjectActive(dialogue1OptionIncorrect, false);
         SetGameObjectActive(dialogue2OptionCorrect, false);

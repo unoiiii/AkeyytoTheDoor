@@ -73,17 +73,11 @@ public class CameraController : MonoBehaviour
                 Debug.LogWarning("CameraController: 未分配 对话3 的正确位置 (dialogue3CorrectPosition)！");
             }
         }
-        else if (dialogueIndex == 8)
-        {
-            // 当对话8显示后，延迟2秒移动摄像机
-            StartCoroutine(MoveCameraAfterDialogue8());
-        }
+        // 注意：对话9和对话10显示时，摄像机保持在对话8的位置不动，无需添加移动逻辑
     }
 
-    private IEnumerator MoveCameraAfterDialogue8()
+    private IEnumerator MoveCameraAndShowDialogue9()
     {
-        yield return new WaitForSeconds(2f);
-
         if (dialogue8Position != null)
         {
             // 移动摄像机并获取移动所需时间
@@ -106,7 +100,10 @@ public class CameraController : MonoBehaviour
 
     private void HandleDialogueClicked(int dialogueIndex)
     {
-        // 移除原有的点击对话8即刻移动摄像机的逻辑，改为对话8显示后自动延迟移动
+        if (dialogueIndex == 8)
+        {
+            StartCoroutine(MoveCameraAndShowDialogue9());
+        }
     }
 
     /// <summary>
