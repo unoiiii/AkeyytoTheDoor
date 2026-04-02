@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections;
 using DG.Tweening;
 
 public class CameraController : MonoBehaviour
@@ -25,6 +26,12 @@ public class CameraController : MonoBehaviour
     [Tooltip("玩家点击对话6正确选项时，摄像机移动到的位置")]
     public Transform dialogue6CorrectPosition;
 
+    [Tooltip("玩家点击对话7正确选项时，摄像机移动到的位置")]
+    public Transform dialogue7CorrectPosition;
+
+    [Tooltip("玩家点击对话8时，摄像机移动到的位置")]
+    public Transform dialogue8Position;
+
     private void Start()
     {
         // 监听 UIManager 的广播事件
@@ -33,6 +40,7 @@ public class CameraController : MonoBehaviour
         {
             UIManager.Instance.OnDialogueOptionClicked += HandleDialogueOptionClicked;
             UIManager.Instance.OnDialogueShown += HandleDialogueShown;
+            UIManager.Instance.OnDialogueClicked += HandleDialogueClicked;
         }
         else
         {
@@ -47,6 +55,7 @@ public class CameraController : MonoBehaviour
         {
             UIManager.Instance.OnDialogueOptionClicked -= HandleDialogueOptionClicked;
             UIManager.Instance.OnDialogueShown -= HandleDialogueShown;
+            UIManager.Instance.OnDialogueClicked -= HandleDialogueClicked;
         }
     }
 
@@ -64,6 +73,40 @@ public class CameraController : MonoBehaviour
                 Debug.LogWarning("CameraController: 未分配 对话3 的正确位置 (dialogue3CorrectPosition)！");
             }
         }
+        else if (dialogueIndex == 8)
+        {
+            // 当对话8显示后，延迟2秒移动摄像机
+            StartCoroutine(MoveCameraAfterDialogue8());
+        }
+    }
+
+    private IEnumerator MoveCameraAfterDialogue8()
+    {
+        yield return new WaitForSeconds(2f);
+
+        if (dialogue8Position != null)
+        {
+            // 移动摄像机并获取移动所需时间
+            float moveDuration = MoveCameraTo(dialogue8Position);
+            
+            // 等待摄像机移动完成，再额外延迟1秒
+            yield return new WaitForSeconds(moveDuration + 1f);
+
+            // 显示对话9
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.ShowDialogue(9);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("CameraController: 未分配 对话8 的位置 (dialogue8Position)！");
+        }
+    }
+
+    private void HandleDialogueClicked(int dialogueIndex)
+    {
+        // 移除原有的点击对话8即刻移动摄像机的逻辑，改为对话8显示后自动延迟移动
     }
 
     /// <summary>
@@ -100,6 +143,9 @@ public class CameraController : MonoBehaviour
                     else
                         Debug.LogWarning("CameraController: 未分配 对话6 的正确位置 (dialogue6CorrectPosition)！");
                     break;
+                case 7:
+                    // 对话7选项正确后，摄像机不在此处移动（由对话8显示后的逻辑接管），移除原有的对话7移动摄像机逻辑
+                    break;
                 default:
                     break;
             }
@@ -111,7 +157,10 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    private void MoveCameraTo(Transform targetTransform)
+    /// <summary>
+    /// 平滑移动摄像机到目标位置，并返回移动所需的总时间
+    /// </summary>
+    private float MoveCameraTo(Transform targetTransform)
     {
         if (targetTransform != null)
         {
@@ -131,7 +180,10 @@ public class CameraController : MonoBehaviour
             // 使用 DOTween 移动摄像机
             transform.DOMove(targetTransform.position, maxDuration).SetEase(moveEase);
             transform.DORotateQuaternion(targetTransform.rotation, maxDuration).SetEase(moveEase);
+            
+            return maxDuration;
         }
+        return 0f;
     }
 
     private void Update()
