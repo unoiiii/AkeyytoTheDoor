@@ -76,6 +76,8 @@ public class UIManager : MonoBehaviour
     [Header("Audio Settings / 音频设置")]
     [Tooltip("挂载一个包含AudioSource组件的游戏物体，用于播放背景音效")]
     public AudioSource backgroundAudio;
+    [Tooltip("挂载一个包含AudioSource组件的游戏物体，用于播放游戏结束音效")]
+    public AudioSource gameOverAudio;
 
     // 广播事件：参数1为对话编号（如 1 代表对话1），参数2为是否正确（true为正确，false为错误）
     public event Action<int, bool> OnDialogueOptionClicked;
@@ -509,6 +511,18 @@ public class UIManager : MonoBehaviour
         if (gameOverUI != null)
         {
             ShowUI(gameOverUI);
+
+            // 暂停背景音频
+            if (backgroundAudio != null && backgroundAudio.isPlaying)
+            {
+                backgroundAudio.Pause();
+            }
+
+            // 播放游戏结束音频
+            if (gameOverAudio != null && !gameOverAudio.isPlaying)
+            {
+                gameOverAudio.Play();
+            }
         }
         else
         {
