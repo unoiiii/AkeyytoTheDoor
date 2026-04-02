@@ -5,8 +5,10 @@ using DG.Tweening;
 public class CameraController : MonoBehaviour
 {
     [Header("摄像机移动设置")]
-    [Tooltip("摄像机的移动时间")]
-    public float moveDuration = 1.5f;
+    [Tooltip("摄像机的移动速度 (单位/秒)")]
+    public float moveSpeed = 5f;
+    [Tooltip("摄像机的旋转速度 (度/秒)")]
+    public float rotationSpeed = 90f;
     [Tooltip("移动的缓动效果")]
     public Ease moveEase = Ease.InOutQuad;
 
@@ -17,6 +19,12 @@ public class CameraController : MonoBehaviour
     [Tooltip("玩家点击对话2正确选项时，摄像机移动到的位置")]
     public Transform dialogue2CorrectPosition;
 
+    [Tooltip("玩家点击对话3正确选项时，摄像机移动到的位置")]
+    public Transform dialogue3CorrectPosition;
+
+    [Tooltip("玩家点击对话6正确选项时，摄像机移动到的位置")]
+    public Transform dialogue6CorrectPosition;
+
     private void Start()
     {
         // 监听 UIManager 的广播事件
@@ -24,6 +32,7 @@ public class CameraController : MonoBehaviour
         if (UIManager.Instance != null)
         {
             UIManager.Instance.OnDialogueOptionClicked += HandleDialogueOptionClicked;
+            UIManager.Instance.OnDialogueShown += HandleDialogueShown;
         }
         else
         {
@@ -37,6 +46,23 @@ public class CameraController : MonoBehaviour
         if (UIManager.Instance != null)
         {
             UIManager.Instance.OnDialogueOptionClicked -= HandleDialogueOptionClicked;
+            UIManager.Instance.OnDialogueShown -= HandleDialogueShown;
+        }
+    }
+
+    private void HandleDialogueShown(int dialogueIndex)
+    {
+        // 对话5显示之后，摄像机再进行移动到对话3正确选项对应位置
+        if (dialogueIndex == 5)
+        {
+            if (dialogue3CorrectPosition != null)
+            {
+                MoveCameraTo(dialogue3CorrectPosition);
+            }
+            else
+            {
+                Debug.LogWarning("CameraController: 未分配 对话3 的正确位置 (dialogue3CorrectPosition)！");
+            }
         }
     }
 
@@ -65,19 +91,46 @@ public class CameraController : MonoBehaviour
                     else
                         Debug.LogWarning("CameraController: 未分配 对话2 的正确位置 (dialogue2CorrectPosition)！");
                     break;
+                case 3:
+                    // 移除对话3点击后的摄像机移动逻辑，改为在对话5显示后移动
+                    break;
+                case 6:
+                    if (dialogue6CorrectPosition != null)
+                        targetTransform = dialogue6CorrectPosition;
+                    else
+                        Debug.LogWarning("CameraController: 未分配 对话6 的正确位置 (dialogue6CorrectPosition)！");
+                    break;
                 default:
-                    Debug.LogWarning($"CameraController: 未配置对话 {dialogueIndex} 的目标位置。");
                     break;
             }
 
             if (targetTransform != null)
             {
-                // 停止之前的动画，防止冲突
-                transform.DOKill();
-                // 使用 DOTween 移动摄像机
-                transform.DOMove(targetTransform.position, moveDuration).SetEase(moveEase);
-                transform.DORotateQuaternion(targetTransform.rotation, moveDuration).SetEase(moveEase);
+                MoveCameraTo(targetTransform);
             }
+        }
+    }
+
+    private void MoveCameraTo(Transform targetTransform)
+    {
+        if (targetTransform != null)
+        {
+            // 停止之前的动画，防止冲突
+            transform.DOKill();
+            
+            // 计算移动和旋转需要的时间
+            float dist = Vector3.Distance(transform.position, targetTransform.position);
+            float posDuration = moveSpeed > 0f ? dist / moveSpeed : 0.1f;
+
+            float angle = Quaternion.Angle(transform.rotation, targetTransform.rotation);
+            float rotDuration = rotationSpeed > 0f ? angle / rotationSpeed : 0.1f;
+
+            // 为了让移动和旋转同步完成，取较大的时间作为动画的持续时间
+            float maxDuration = Mathf.Max(posDuration, rotDuration);
+
+            // 使用 DOTween 移动摄像机
+            transform.DOMove(targetTransform.position, maxDuration).SetEase(moveEase);
+            transform.DORotateQuaternion(targetTransform.rotation, maxDuration).SetEase(moveEase);
         }
     }
 
@@ -89,8 +142,17 @@ public class CameraController : MonoBehaviour
             if (dialogue1CorrectPosition != null)
             {
                 transform.DOKill();
-                transform.DOMove(dialogue1CorrectPosition.position, moveDuration).SetEase(moveEase);
-                transform.DORotateQuaternion(dialogue1CorrectPosition.rotation, moveDuration).SetEase(moveEase);
+                
+                float dist = Vector3.Distance(transform.position, dialogue1CorrectPosition.position);
+                float posDuration = moveSpeed > 0f ? dist / moveSpeed : 0.1f;
+
+                float angle = Quaternion.Angle(transform.rotation, dialogue1CorrectPosition.rotation);
+                float rotDuration = rotationSpeed > 0f ? angle / rotationSpeed : 0.1f;
+
+                float maxDuration = Mathf.Max(posDuration, rotDuration);
+
+                transform.DOMove(dialogue1CorrectPosition.position, maxDuration).SetEase(moveEase);
+                transform.DORotateQuaternion(dialogue1CorrectPosition.rotation, maxDuration).SetEase(moveEase);
                 Debug.Log("CameraController: 测试功能触发 -> 准备移动到对话1正确位置");
             }
             else

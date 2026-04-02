@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.Video;
 using System;
 using System.Collections;
 using DG.Tweening;
@@ -28,6 +29,10 @@ public class UIManager : MonoBehaviour
     [Header("UI Images / 对话面板 (点击不发广播)")]
     public GameObject dialogue1;
     public GameObject dialogue2;
+    public GameObject dialogue3;
+    public GameObject dialogue4;
+    public GameObject dialogue5;
+    public GameObject dialogue6;
 
     [Header("对话1 选项 (点击发送广播)")]
     public GameObject dialogue1OptionCorrect;
@@ -37,11 +42,28 @@ public class UIManager : MonoBehaviour
     public GameObject dialogue2OptionCorrect;
     public GameObject dialogue2OptionIncorrect;
 
+    [Header("对话3 选项 (点击发送广播)")]
+    public GameObject dialogue3OptionCorrect;
+    public GameObject dialogue3OptionIncorrect;
+
+    [Header("对话6 选项 (点击发送广播)")]
+    public GameObject dialogue6OptionCorrect;
+    public GameObject dialogue6OptionIncorrect;
+
+    [Header("Raw Image (对话3出现时打开)")]
+    public RawImage dialogue3RawImage;
+
+    [Header("Videos / 视频 (对话3出现时打开)")]
+    public VideoPlayer video1;
+
     [Header("Game Over UI / 游戏结束界面")]
     public GameObject gameOverUI;
 
     // 广播事件：参数1为对话编号（如 1 代表对话1），参数2为是否正确（true为正确，false为错误）
     public event Action<int, bool> OnDialogueOptionClicked;
+    
+    // 广播事件：参数为对话编号
+    public event Action<int> OnDialogueShown;
 
     private void Awake()
     {
@@ -64,14 +86,61 @@ public class UIManager : MonoBehaviour
         AddClickListenerToGameObject(dialogue2OptionCorrect, 2, true);
         AddClickListenerToGameObject(dialogue2OptionIncorrect, 2, false);
 
+        AddClickListenerToGameObject(dialogue3OptionCorrect, 3, true);
+        AddClickListenerToGameObject(dialogue3OptionIncorrect, 3, false);
+
+        AddClickListenerToGameObject(dialogue6OptionCorrect, 6, true);
+        AddClickListenerToGameObject(dialogue6OptionIncorrect, 6, false);
+
+        // 为对话5本身添加点击事件（不发送广播，仅用于推进流程）
+        AddDialogueClickListener(dialogue5, () => 
+        {
+            if (dialogue5 != null && dialogue5.activeSelf)
+            {
+                HideDialogue(4); // 点击对话5时，同时隐藏对话4
+                HideDialogue(5); // 隐藏对话5本身
+                float delay = animationType == UIAnimationType.None ? 0f : animationDuration;
+                StartCoroutine(ShowNextDialogueDelayed(6, delay));
+            }
+        });
+
         // 初始化UI状态
         InitializeUI();
     }
 
     /// <summary>
+    /// 为对话框本身添加点击事件（不发送广播，仅用于流程推进）
+    /// </summary>
+    private void AddDialogueClickListener(GameObject obj, Action onClickAction)
+    {
+        if (obj == null) return;
+
+        // 尝试获取 Image 组件以确保它可以接收射线检测
+        Image img = obj.GetComponent<Image>();
+        if (img != null)
+        {
+            img.raycastTarget = true;
+        }
+
+        // 获取或添加 EventTrigger 组件
+        EventTrigger trigger = obj.GetComponent<EventTrigger>();
+        if (trigger == null)
+        {
+            trigger = obj.AddComponent<EventTrigger>();
+        }
+
+        // 创建 PointerClick 事件
+        EventTrigger.Entry entry = new EventTrigger.Entry();
+        entry.eventID = EventTriggerType.PointerClick;
+        entry.callback.AddListener((data) => { onClickAction?.Invoke(); });
+        
+        trigger.triggers.Add(entry);
+    }
+
+    /// <summary>
     /// 初始化UI显示状态，根据规则：
     /// Dialogue1默认出现，对话1选项延迟1秒出现
-    /// Dialogue2及选项默认隐藏
+    /// Dialogue2、3及选项默认隐藏
     /// </summary>
     private void InitializeUI()
     {
@@ -82,6 +151,28 @@ public class UIManager : MonoBehaviour
         HideUI(dialogue2, true);
         SetGameObjectActive(dialogue2OptionCorrect, false, true);
         SetGameObjectActive(dialogue2OptionIncorrect, false, true);
+
+        // 隐藏所有对话3相关的UI (瞬间隐藏，不要动画，作为初始状态)
+        HideUI(dialogue3, true);
+        SetGameObjectActive(dialogue3OptionCorrect, false, true);
+        SetGameObjectActive(dialogue3OptionIncorrect, false, true);
+
+        // 隐藏所有对话4相关的UI (瞬间隐藏，不要动画，作为初始状态)
+        HideUI(dialogue4, true);
+
+        // 隐藏所有对话5相关的UI (瞬间隐藏，不要动画，作为初始状态)
+        HideUI(dialogue5, true);
+
+        // 隐藏所有对话6相关的UI (瞬间隐藏，不要动画，作为初始状态)
+        HideUI(dialogue6, true);
+        SetGameObjectActive(dialogue6OptionCorrect, false, true);
+        SetGameObjectActive(dialogue6OptionIncorrect, false, true);
+
+        // 显示视频 (始终打开)
+        if (video1 != null) video1.gameObject.SetActive(true);
+
+        // 显示对话3对应的 RawImage (始终打开)
+        if (dialogue3RawImage != null) dialogue3RawImage.gameObject.SetActive(true);
 
         // 隐藏对话1的选项 (瞬间隐藏，不要动画，作为初始状态)
         SetGameObjectActive(dialogue1OptionCorrect, false, true);
@@ -121,6 +212,22 @@ public class UIManager : MonoBehaviour
             {
                 SetGameObjectActive(dialogue2OptionCorrect, true);
                 SetGameObjectActive(dialogue2OptionIncorrect, true);
+            }
+        }
+        else if (dialogueIndex == 3)
+        {
+            if (dialogue3 != null && dialogue3.activeSelf)
+            {
+                SetGameObjectActive(dialogue3OptionCorrect, true);
+                SetGameObjectActive(dialogue3OptionIncorrect, true);
+            }
+        }
+        else if (dialogueIndex == 6)
+        {
+            if (dialogue6 != null && dialogue6.activeSelf)
+            {
+                SetGameObjectActive(dialogue6OptionCorrect, true);
+                SetGameObjectActive(dialogue6OptionIncorrect, true);
             }
         }
     }
@@ -189,6 +296,16 @@ public class UIManager : MonoBehaviour
             SetGameObjectActive(dialogue2OptionCorrect, false);
             SetGameObjectActive(dialogue2OptionIncorrect, false);
         }
+        else if (dialogueIndex == 3)
+        {
+            SetGameObjectActive(dialogue3OptionCorrect, false);
+            SetGameObjectActive(dialogue3OptionIncorrect, false);
+        }
+        else if (dialogueIndex == 6)
+        {
+            SetGameObjectActive(dialogue6OptionCorrect, false);
+            SetGameObjectActive(dialogue6OptionIncorrect, false);
+        }
 
         // 2. 广播玩家点击了哪个对话的正确/错误选项
         // 将广播放到 UI 更新之后，防止外部脚本报错中断 UI 逻辑
@@ -206,11 +323,27 @@ public class UIManager : MonoBehaviour
         
         if (isCorrect)
         {
-            // 规则：如果点击了对话1的【正确】选项，则显示对话2
             if (dialogueIndex == 1)
             {
                 // 延迟等待隐藏动画播完再显示下一个，或者直接显示
                 StartCoroutine(ShowNextDialogueDelayed(2, delay));
+            }
+            else if (dialogueIndex == 2)
+            {
+                // 显示对话3 (在这个过程中会先播放视频，再显示选项)
+                StartCoroutine(ShowNextDialogueDelayed(3, delay));
+            }
+            else if (dialogueIndex == 3)
+            {
+                // 对话3已经全部完成（包含选项点击），可以推进到后续逻辑
+                Debug.Log("对话3正确选项被点击。");
+                // 推进到对话4
+                StartCoroutine(ShowNextDialogueDelayed(4, delay));
+            }
+            else if (dialogueIndex == 6)
+            {
+                Debug.Log("对话6正确选项被点击。");
+                // 推进到后续逻辑（如有需要可在此添加）
             }
         }
         else
@@ -226,6 +359,31 @@ public class UIManager : MonoBehaviour
             yield return new WaitForSeconds(delay);
             
         ShowDialogue(dialogueIndex);
+    }
+
+    private IEnumerator PlayVideoAndShowOptions(float initialDelay)
+    {
+        // 1. 等待主对话框动画播放完毕
+        if (initialDelay > 0)
+            yield return new WaitForSeconds(initialDelay);
+
+        // 2. 播放视频
+        if (video1 != null)
+        {
+            video1.Play();
+            
+            // 等待视频准备好
+            while (!video1.isPrepared)
+            {
+                yield return null;
+            }
+
+            // 等待视频播放完成
+            while (video1.isPlaying || (ulong)video1.frame < video1.frameCount - 1)
+            {
+                yield return null;
+            }
+        }
     }
 
     private IEnumerator ShowGameOverDelayed(float delay)
@@ -266,6 +424,46 @@ public class UIManager : MonoBehaviour
             SetGameObjectActive(dialogue2OptionIncorrect, false, true);
             StartCoroutine(ShowOptionsDelayed(2, optionDelay));
         }
+        else if (dialogueIndex == 3 && dialogue3 != null)
+        {
+            ShowUI(dialogue3);
+            if (dialogue3RawImage != null) dialogue3RawImage.gameObject.SetActive(true);
+            SetGameObjectActive(dialogue3OptionCorrect, false, true);
+            SetGameObjectActive(dialogue3OptionIncorrect, false, true);
+            
+            // 出现对话3时，播放视频1
+            StartCoroutine(PlayVideoAndShowOptions(optionDelay));
+            
+            // 延迟11秒后显示对话3的选项
+            StartCoroutine(ShowOptionsDelayed(3, 11f));
+        }
+        else if (dialogueIndex == 4 && dialogue4 != null)
+        {
+            ShowUI(dialogue4);
+            // 对话4没有选项，停留2秒后自动推进到对话5
+            StartCoroutine(ShowNextDialogueDelayed(5, 2f));
+        }
+        else if (dialogueIndex == 5 && dialogue5 != null)
+        {
+            ShowUI(dialogue5);
+        }
+        else if (dialogueIndex == 6 && dialogue6 != null)
+        {
+            ShowUI(dialogue6);
+            SetGameObjectActive(dialogue6OptionCorrect, false, true);
+            SetGameObjectActive(dialogue6OptionIncorrect, false, true);
+            StartCoroutine(ShowOptionsDelayed(6, optionDelay));
+        }
+
+        // 触发对话显示的事件
+        try
+        {
+            OnDialogueShown?.Invoke(dialogueIndex);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Broadcast OnDialogueShown failed: {e.Message}\n{e.StackTrace}");
+        }
     }
 
     /// <summary>
@@ -281,6 +479,23 @@ public class UIManager : MonoBehaviour
         {
             HideUI(dialogue2);
         }
+        else if (dialogueIndex == 3 && dialogue3 != null)
+        {
+            HideUI(dialogue3);
+            if (dialogue3RawImage != null) dialogue3RawImage.gameObject.SetActive(false);
+        }
+        else if (dialogueIndex == 4 && dialogue4 != null)
+        {
+            HideUI(dialogue4);
+        }
+        else if (dialogueIndex == 5 && dialogue5 != null)
+        {
+            HideUI(dialogue5);
+        }
+        else if (dialogueIndex == 6 && dialogue6 != null)
+        {
+            HideUI(dialogue6);
+        }
     }
 
     /// <summary>
@@ -290,10 +505,19 @@ public class UIManager : MonoBehaviour
     {
         HideUI(dialogue1);
         HideUI(dialogue2);
+        HideUI(dialogue3);
+        HideUI(dialogue4);
+        HideUI(dialogue5);
+        HideUI(dialogue6);
         SetGameObjectActive(dialogue1OptionCorrect, false);
         SetGameObjectActive(dialogue1OptionIncorrect, false);
         SetGameObjectActive(dialogue2OptionCorrect, false);
         SetGameObjectActive(dialogue2OptionIncorrect, false);
+        SetGameObjectActive(dialogue3OptionCorrect, false);
+        SetGameObjectActive(dialogue3OptionIncorrect, false);
+        SetGameObjectActive(dialogue6OptionCorrect, false);
+        SetGameObjectActive(dialogue6OptionIncorrect, false);
+        if (dialogue3RawImage != null) dialogue3RawImage.gameObject.SetActive(false);
         HideUI(gameOverUI);
     }
 
